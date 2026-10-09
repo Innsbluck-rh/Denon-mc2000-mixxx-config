@@ -355,6 +355,50 @@ MC2000.isButtonOn = function(value) {
     return value === 0x7F || value === 0x40;
 };
 
+// Absolute knob with a shift layer: one physical knob drives two Mixxx controls.
+// A layer only takes over once the knob reaches (or passes) that control's current
+// value, so switching layers, or changing the value in the GUI, never makes it jump.
+// layers: [{group, key}, {group, key}] = [unshifted, shifted]
+MC2000.PickupKnob = function(normalLayer, shiftedLayer) {
+    this.layers = [normalLayer, shiftedLayer];
+    this.active = 0;
+    this.picked = [false, false];
+    this.lastSet = [undefined, undefined]; // last parameter this script set, per layer
+    this.lastParam = undefined;            // last physical knob position (0-1), shared
+};
+MC2000.PickupKnob.prototype.pickupThreshold = 0.03;
+MC2000.PickupKnob.prototype.input = function(channel, control, value) {
+    var i = this.active;
+    var layer = this.layers[i];
+    var param = value / 127;
+    var current = engine.getParameter(layer.group, layer.key);
+
+    // Value was changed elsewhere (GUI, another mapping): pick it up again
+    if (this.picked[i] && Math.abs(current - this.lastSet[i]) > 0.01) {
+        this.picked[i] = false;
+    }
+    if (!this.picked[i]) {
+        var crossed = this.lastParam !== undefined &&
+            (this.lastParam - current) * (param - current) <= 0;
+        if (crossed || Math.abs(param - current) < this.pickupThreshold) {
+            this.picked[i] = true;
+            if (MC2000.debugMode) MC2000.debugLog("PickupKnob: picked up " + layer.group + " " + layer.key);
+        }
+    }
+    this.lastParam = param;
+    if (this.picked[i]) {
+        engine.setParameter(layer.group, layer.key, param);
+        this.lastSet[i] = param;
+    }
+};
+MC2000.PickupKnob.prototype.setLayer = function(index) {
+    if (index === this.active) return;
+    this.active = index;
+    this.picked[index] = false; // the knob has probably moved since this layer was last used
+};
+MC2000.PickupKnob.prototype.shift = function() { this.setLayer(1); };
+MC2000.PickupKnob.prototype.unshift = function() { this.setLayer(0); };
+
 //////////////////////////////
 // Debug logging            //
 //////////////////////////////
@@ -1479,11 +1523,14 @@ MC2000.Deck = function(group) {
     if (typeof MC2000Config.pregainAsFilter === 'undefined') {
         MC2000Config.pregainAsFilter = false; // default off
     }
+    // SHIFT switches the knob to the other control (filter <-> pregain)
+    var filterLayer = { group: "[QuickEffectRack1_" + group + "]", key: "super1" };
+    var gainLayer = { group: group, key: "pregain" };
     if (MC2000Config.pregainAsFilter) {
-        // Alternate: use deck filter (QuickEffect super1) via the gain knob
-        this.trackGain = new components.Pot({ group: "[QuickEffectRack1_" + group + "]", inKey: "super1" });
+        // Alternate: use deck filter (QuickEffect super1) via the gain knob, SHIFT for pregain
+        this.trackGain = new MC2000.PickupKnob(filterLayer, gainLayer);
     } else {
-        this.trackGain = new components.Pot({ group: group, inKey: "pregain" });
+        this.trackGain = new MC2000.PickupKnob(gainLayer, filterLayer);
     }
 
     // Volume: channel volume fader
@@ -1622,6 +1669,7 @@ MC2000.Deck = function(group) {
             this.loopHalveBtn,
             this.loopDoubleBtn,
             this.reloopExitBtn,
+            this.trackGain,
         ];
         // Apply shift/unshift to individual components
         shiftComponents.forEach(function(comp) {
