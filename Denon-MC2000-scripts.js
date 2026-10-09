@@ -529,7 +529,15 @@ MC2000.init = function(id) {
    
     engine.beginTimer(1000, function() {
         MC2000.LedManager.resetDefaults();
-        
+
+        // Restore FX unit assign LEDs (LOOP IN/OUT), which the reset just turned off
+        Object.keys(MC2000.decks).forEach(function(g) {
+            [1, 2].forEach(function(n) {
+                var btn = MC2000.decks[g].fxAssignBtns[n];
+                btn.output(engine.getValue(btn.group, btn.inKey));
+            });
+        });
+
         //blink key led to show pitch range
         MC2000.decks["[Channel1]"].keylock.blinkLed();
         MC2000.decks["[Channel2]"].keylock.blinkLed();
@@ -1899,6 +1907,26 @@ MC2000.Deck = function(group) {
         engine.makeConnection(this.group, "loop_enabled", this.output.bind(this));
     };
 
+    // FX unit assign (LOOP IN = FX1, LOOP OUT = FX2): route this deck through the unit.
+    // Replaces the loop controls above, which stay in the code but are unmapped in the XML.
+    this.fxAssignBtns = {};
+    [[1, "loopin"], [2, "loopout"]].forEach(function(pair) {
+        var unitNumber = pair[0], ledName = pair[1];
+        var btn = new components.Button({
+            group: "[EffectRack1_EffectUnit" + unitNumber + "]",
+            inKey: "group_" + group + "_enable",
+            type: components.Button.prototype.types.toggle,
+        });
+        btn.output = function(value) {
+            MC2000.LedManager.reflect(ledName, value, {deck: self.deckNumber});
+        };
+        btn.connect = function() {
+            engine.makeConnection(this.group, this.inKey, this.output.bind(this));
+            this.output(engine.getValue(this.group, this.inKey));
+        };
+        self.fxAssignBtns[unitNumber] = btn;
+    });
+
     // Hotcues: using HotcueButton components
     this.hotcueButtons = [];
     var ledNames = ["cue1", "cue2", "cue3", "cue4"];
@@ -1977,9 +2005,12 @@ MC2000.buildComponents = function() {
         if (d.keylock && d.keylock.connect) d.keylock.connect();
         if (d.pfl && d.pfl.connect) d.pfl.connect();
         if (d.sampleModeToggle && d.sampleModeToggle.connect) d.sampleModeToggle.connect();
-        if (d.loopInBtn && d.loopInBtn.connect) d.loopInBtn.connect();
-        if (d.loopOutBtn && d.loopOutBtn.connect) d.loopOutBtn.connect();
-        if (d.reloopExitBtn && d.reloopExitBtn.connect) d.reloopExitBtn.connect();
+        // Loop LEDs disabled: LOOP IN/OUT LEDs now show FX unit assign, AUTO is unmapped
+        // if (d.loopInBtn && d.loopInBtn.connect) d.loopInBtn.connect();
+        // if (d.loopOutBtn && d.loopOutBtn.connect) d.loopOutBtn.connect();
+        // if (d.reloopExitBtn && d.reloopExitBtn.connect) d.reloopExitBtn.connect();
+        d.fxAssignBtns[1].connect();
+        d.fxAssignBtns[2].connect();
         
         // Connect hotcue button LEDs
         if (d.hotcueButtons) {
@@ -2153,6 +2184,17 @@ MC2000.mapHotcue = function(midino) {
         0x20: 4
     };
     return table[midino] || -1;
+};
+
+//////////////////////////////
+// FX unit assign handlers  //
+//////////////////////////////
+MC2000.fxAssign1 = function(channel, control, value, status, group) {
+    MC2000.decks[group].fxAssignBtns[1].input(channel, control, value, status, group);
+};
+
+MC2000.fxAssign2 = function(channel, control, value, status, group) {
+    MC2000.decks[group].fxAssignBtns[2].input(channel, control, value, status, group);
 };
 
 //////////////////////////////

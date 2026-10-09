@@ -593,7 +593,7 @@
         <options><Script-Binding/></options>
       </control>
       
-      <!-- Loop controls Deck 1  -->
+      <!-- Loop controls Deck 1 (disabled: LOOP buttons are reassigned, see "FX unit assign" below)
       <control>
         <group>[Channel1]</group>
         <key>MC2000.loopIn</key>
@@ -664,8 +664,9 @@
         <midino>0x69</midino>
         <options><Script-Binding/></options>
       </control>
+      -->
       
-      <!-- Loop controls Deck 2  -->
+      <!-- Loop controls Deck 2 (disabled: LOOP buttons are reassigned, see "FX unit assign" below)
       <control>
         <group>[Channel2]</group>
         <key>MC2000.loopIn</key>
@@ -736,7 +737,38 @@
         <midino>0x69</midino>
         <options><Script-Binding/></options>
       </control>
-      
+      -->
+
+      <!-- FX unit assign: LOOP IN = route deck to FX1, LOOP OUT = route deck to FX2 -->
+      <control>
+        <group>[Channel1]</group>
+        <key>MC2000.fxAssign1</key>
+        <status>0x90</status>
+        <midino>0x37</midino>
+        <options><Script-Binding/></options>
+      </control>
+      <control>
+        <group>[Channel1]</group>
+        <key>MC2000.fxAssign2</key>
+        <status>0x90</status>
+        <midino>0x39</midino>
+        <options><Script-Binding/></options>
+      </control>
+      <control>
+        <group>[Channel2]</group>
+        <key>MC2000.fxAssign1</key>
+        <status>0x91</status>
+        <midino>0x37</midino>
+        <options><Script-Binding/></options>
+      </control>
+      <control>
+        <group>[Channel2]</group>
+        <key>MC2000.fxAssign2</key>
+        <status>0x91</status>
+        <midino>0x39</midino>
+        <options><Script-Binding/></options>
+      </control>
+
       <!-- Master Controls -->
       <!-- Master Volume -->
       <control>

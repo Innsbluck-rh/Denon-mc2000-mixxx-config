@@ -180,7 +180,7 @@ tr[hidden] { display: none; }
           <code>useAltPitchBend</code>（SHIFT+BEND を32拍ジャンプにする、現在 ON）、
           <code>useAltPlayShift</code>（SHIFT+PLAY を逆再生ロールにする、現在 OFF）、
           <code>setVolumeToSafeDefault</code>（起動時の音量リセット、現在 ON）。</li>
-        <li>FX をどのデッキに通すかは Mixxx の画面で選びます。初期状態は FX1 が Deck1、FX2 が Deck2。</li>
+        <li>FX をどのデッキに通すかは LOOP IN（FX1）/ LOOP OUT（FX2）で切り替え、LED で状態が分かります。初期状態は FX1 が Deck1、FX2 が Deck2。</li>
       </ul>
     </div>
     <div class="card">
@@ -232,11 +232,11 @@ const C = [
   {id:"L6", n:"FX1 ボタン 2", s:["r",401,282,76,38], midi:"90/80 12", fn:"FX1 エフェクト2 ON/OFF", sh:"—", led:"5D (93) → ON/OFF", st:"ok", note:""},
   {id:"L7", n:"FX1 ボタン 3", s:["r",521,282,76,38], midi:"90/80 13", fn:"FX1 エフェクト3 ON/OFF", sh:"—", led:"5E (94) → ON/OFF", st:"ok", note:""},
   {g:"左デッキ  LOOP / HOT CUE"},
-  {id:"L8", n:"LOOP IN", s:["r",281,362,76,38], midi:"90/80 37", fn:"ループ未設定なら4拍ループ開始。それ以外はIN点を打つ", sh:"短押し: IN点へ戻る\n長押し: ループ削除", led:"24 (36) → ループ中", st:"ok", note:""},
-  {id:"L9", n:"LOOP OUT", s:["r",401,362,76,38], midi:"90/80 39", fn:"OUT点を打つ", sh:"短押し: OUT点へ移動\n長押し: ループ削除", led:"40 (64) → ループ中", st:"ok", note:""},
-  {id:"L10", n:"LOOP CUT −", s:["c",500,362,17], midi:"90/80 69", fn:"ループ長を半分", sh:"1拍戻る", led:"—", st:"ok", note:""},
-  {id:"L11", n:"AUTO（LOOP）", s:["r",581,360,76,34], midi:"90/80 1D", fn:"ループ中なら解除。それ以外は自動ループ開始", sh:"直前のループを再開/解除", led:"2B (43) → ループ中", st:"ok", note:""},
-  {id:"L12", n:"LOOP CUT +", s:["c",660,362,17], midi:"90/80 6A", fn:"ループ長を倍", sh:"1拍進む", led:"—", st:"ok", note:""},
+  {id:"L8", n:"LOOP IN", s:["r",281,362,76,38], midi:"90/80 37", fn:"Deck1 を FX1 に通す ON/OFF", sh:"—", led:"24 (36) → FX1 に通しているか", st:"check", note:"ループ機能は停止中（コメントアウト）。"},
+  {id:"L9", n:"LOOP OUT", s:["r",401,362,76,38], midi:"90/80 39", fn:"Deck1 を FX2 に通す ON/OFF", sh:"—", led:"40 (64) → FX2 に通しているか", st:"check", note:"同上。"},
+  {id:"L10", n:"LOOP CUT −", s:["c",500,362,17], midi:"90/80 69", fn:"未割当（ループ機能は停止中）", sh:"—", led:"—", st:"none", note:"元はループ操作。コードは残してある。"},
+  {id:"L11", n:"AUTO（LOOP）", s:["r",581,360,76,34], midi:"90/80 1D", fn:"未割当（ループ機能は停止中）", sh:"—", led:"—", st:"none", note:"元はループ操作。コードは残してある。"},
+  {id:"L12", n:"LOOP CUT +", s:["c",660,362,17], midi:"90/80 6A", fn:"未割当（ループ機能は停止中）", sh:"—", led:"—", st:"none", note:"元はループ操作。コードは残してある。"},
   {id:"L13", n:"HOT CUE 1", s:["r",282,441,76,38], midi:"90/80 17\nSAMPLE時 90 21", fn:"ホットキュー1 設定/再生\nSAMPLE時: サンプラー1（空なら選択曲を読込、停止中なら頭から再生、再生中なら停止）", sh:"ホットキュー削除\nSAMPLE時: サンプラーを空にする", led:"11 (17) → キュー有無\nSAMPLE: 19 (25) → 再生中", st:"ok", note:""},
   {id:"L14", n:"HOT CUE 2", s:["r",401,441,76,38], midi:"90/80 18\nSAMPLE時 90 22", fn:"ホットキュー2 / サンプラー2", sh:"削除 / 空にする", led:"13 (19) / 1B (27)", st:"ok", note:""},
   {id:"L15", n:"HOT CUE 3", s:["r",521,441,76,38], midi:"90/80 19\nSAMPLE時 90 23", fn:"ホットキュー3 / サンプラー3", sh:"削除 / 空にする", led:"15 (21) / 1D (29)", st:"ok", note:""},
@@ -270,11 +270,11 @@ const C = [
   {id:"R6", n:"FX2 ボタン 2", s:["r",1282,282,76,38], midi:"90/80 52", fn:"FX2 エフェクト2 ON/OFF", sh:"—", led:"61 (97) → ON/OFF", st:"ok", note:""},
   {id:"R7", n:"FX2 ボタン 3", s:["r",1402,282,76,38], midi:"90/80 53", fn:"FX2 エフェクト3 ON/OFF", sh:"—", led:"62 (98) → ON/OFF", st:"ok", note:""},
   {g:"右デッキ  LOOP / HOT CUE"},
-  {id:"R8", n:"LOOP IN", s:["r",1162,360,76,38], midi:"91/81 37", fn:"ループ未設定なら4拍ループ開始。それ以外はIN点を打つ", sh:"短押し: IN点へ戻る\n長押し: ループ削除", led:"24 (36) → ループ中", st:"ok", note:""},
-  {id:"R9", n:"LOOP OUT", s:["r",1282,360,76,38], midi:"91/81 39", fn:"OUT点を打つ", sh:"短押し: OUT点へ移動\n長押し: ループ削除", led:"40 (64) → ループ中", st:"ok", note:""},
-  {id:"R10", n:"LOOP CUT −", s:["c",1383,360,17], midi:"91/81 69", fn:"ループ長を半分", sh:"1拍戻る", led:"—", st:"ok", note:""},
-  {id:"R11", n:"AUTO（LOOP）", s:["r",1462,360,76,34], midi:"91/81 1D", fn:"ループ中なら解除。それ以外は自動ループ開始", sh:"直前のループを再開/解除", led:"2B (43) → ループ中", st:"ok", note:""},
-  {id:"R12", n:"LOOP CUT +", s:["c",1545,360,17], midi:"91/81 6A", fn:"ループ長を倍", sh:"1拍進む", led:"—", st:"ok", note:""},
+  {id:"R8", n:"LOOP IN", s:["r",1162,360,76,38], midi:"91/81 37", fn:"Deck2 を FX1 に通す ON/OFF", sh:"—", led:"24 (36) → FX1 に通しているか", st:"check", note:"ループ機能は停止中（コメントアウト）。"},
+  {id:"R9", n:"LOOP OUT", s:["r",1282,360,76,38], midi:"91/81 39", fn:"Deck2 を FX2 に通す ON/OFF", sh:"—", led:"40 (64) → FX2 に通しているか", st:"check", note:"同上。"},
+  {id:"R10", n:"LOOP CUT −", s:["c",1383,360,17], midi:"91/81 69", fn:"未割当（ループ機能は停止中）", sh:"—", led:"—", st:"none", note:"元はループ操作。コードは残してある。"},
+  {id:"R11", n:"AUTO（LOOP）", s:["r",1462,360,76,34], midi:"91/81 1D", fn:"未割当（ループ機能は停止中）", sh:"—", led:"—", st:"none", note:"元はループ操作。コードは残してある。"},
+  {id:"R12", n:"LOOP CUT +", s:["c",1545,360,17], midi:"91/81 6A", fn:"未割当（ループ機能は停止中）", sh:"—", led:"—", st:"none", note:"元はループ操作。コードは残してある。"},
   {id:"R13", n:"HOT CUE 1", s:["r",1162,441,76,38], midi:"91/81 17\nSAMPLE時 91 31", fn:"ホットキュー1 / サンプラー5", sh:"削除 / 空にする", led:"11 (17) / 41 (65)", st:"ok", note:""},
   {id:"R14", n:"HOT CUE 2", s:["r",1282,441,76,38], midi:"91/81 18\nSAMPLE時 91 32", fn:"ホットキュー2 / サンプラー6", sh:"削除 / 空にする", led:"13 (19) / 43 (67)", st:"ok", note:""},
   {id:"R15", n:"HOT CUE 3", s:["r",1402,441,76,38], midi:"91/81 19\nSAMPLE時 91 33", fn:"ホットキュー3 / サンプラー7", sh:"削除 / 空にする", led:"15 (21) / 45 (69)", st:"ok", note:""},
