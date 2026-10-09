@@ -358,7 +358,8 @@ MC2000.isButtonOn = function(value) {
 // Absolute knob with a shift layer: one physical knob drives two Mixxx controls.
 // A layer only takes over once the knob reaches (or passes) that control's current
 // value, so switching layers, or changing the value in the GUI, never makes it jump.
-// layers: [{group, key}, {group, key}] = [unshifted, shifted]
+// layers: [{group, key}, {group, key}] = [unshifted, shifted]; shifted is optional
+// for a plain knob that only needs the no-jump pickup
 MC2000.PickupKnob = function(normalLayer, shiftedLayer) {
     this.layers = [normalLayer, shiftedLayer];
     this.active = 0;
@@ -628,10 +629,9 @@ MC2000.isShiftActive = function() {
 //////////////////////////////
 MC2000.buildMasterControls = function() {
     // Main output volume
-    MC2000.masterVolumePot = new components.Pot({
-        group: "[Master]",
-        inKey: "gain"
-    });
+    // PickupKnob instead of components.Pot: a Pot applies its first value directly,
+    // so the volume jumped to the knob position on the first touch after startup.
+    MC2000.masterVolumePot = new MC2000.PickupKnob({ group: "[Master]", key: "gain" });
     
     // Crossfader
     // Normal: controls master crossfader.
@@ -746,17 +746,11 @@ MC2000.buildMasterControls = function() {
         originalCrossfaderInput.call(this, channel, control, value, status, group);
     };
     
-    // Headphone volume
-    MC2000.headphoneVolumePot = new components.Pot({
-        group: "[Master]",
-        inKey: "headVolume"
-    });
-    
-    // Headphone mix (master/PFL balance)
-    MC2000.headphoneMixPot = new components.Pot({
-        group: "[Master]",
-        inKey: "headMix"
-    });
+    // Headphone volume (no jump, see master volume)
+    MC2000.headphoneVolumePot = new MC2000.PickupKnob({ group: "[Master]", key: "headVolume" });
+
+    // Headphone mix (master/PFL balance) (no jump, see master volume)
+    MC2000.headphoneMixPot = new MC2000.PickupKnob({ group: "[Master]", key: "headMix" });
 };
 
 //////////////////////////////

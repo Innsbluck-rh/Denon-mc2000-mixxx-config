@@ -307,9 +307,9 @@ const C = [
   {id:"C5", n:"BROWSE 2", s:["c",962,546,19], midi:"90/80 67", fn:"Deck2 のイントロ開始マーカーへジャンプ", sh:"Deck2 のイントロ終了マーカーへジャンプ", led:"—", st:"check", note:"C4 と同じ。"},
   {id:"C6", n:"SHIFT", s:["r",902,634,72,34], midi:"90/80 60", fn:"押している間 SHIFT", sh:"SHIFT+モニターCUE で SHIFT ロック", led:"02 → SHIFT ロック中", st:"ok", note:"上の小さな LOCK LED が SHIFT ロック表示。"},
   {id:"C7", n:"クロスフェーダー", s:["r",903,1025,220,80], midi:"B0 16", fn:"クロスフェード", sh:"SHIFT 中に動かす: 鳴っている側に相手デッキを一時同期。SHIFT を離すと元の同期設定に戻る", led:"—", st:"ok", note:""},
-  {id:"C8", n:"MONITOR PAN（CUE/MASTER）", s:["c",163,378,30], midi:"B0 43", fn:"ヘッドホンの CUE / MASTER バランス", sh:"—", led:"—", st:"ok", note:""},
-  {id:"C9", n:"PHONES", s:["c",165,500,30], midi:"B0 44", fn:"ヘッドホン音量", sh:"—", led:"—", st:"ok", note:""},
-  {id:"C10", n:"MASTER LEVEL", s:["c",1637,378,30], midi:"B0 19", fn:"マスター音量", sh:"—", led:"—", st:"ok", note:""},
+  {id:"C8", n:"MONITOR PAN（CUE/MASTER）", s:["c",163,378,30], midi:"B0 43", fn:"ヘッドホンの CUE / MASTER バランス", sh:"—", led:"—", st:"ok", note:"ノブが今の値を通過してから効く（値が飛ばない）。"},
+  {id:"C9", n:"PHONES", s:["c",165,500,30], midi:"B0 44", fn:"ヘッドホン音量", sh:"—", led:"—", st:"ok", note:"ノブが今の値を通過してから効く（値が飛ばない）。"},
+  {id:"C10", n:"MASTER LEVEL", s:["c",1637,378,30], midi:"B0 19", fn:"マスター音量", sh:"—", led:"—", st:"ok", note:"ノブが今の値を通過してから効く（値が飛ばない）。"},
 ];
 
 // state: open 未着手 / wait 確認待ち / done 完了
