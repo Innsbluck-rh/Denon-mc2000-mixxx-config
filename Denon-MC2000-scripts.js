@@ -2277,14 +2277,15 @@ MC2000.libraryPreviewButton = function(channel, control, value, status, group) {
 
 };
 
-// BROWSE 1 / BROWSE 2: jump to the deck's intro start marker.
-// Only jumps when a marker exists: intro_start_activate would otherwise set a new one.
+// BROWSE 1 / BROWSE 2: jump to the deck's intro start marker (SHIFT: intro end).
+// Only jumps when a marker exists: *_activate would otherwise set a new one.
 MC2000.introStartButton = function(channel, control, value, status, group) {
     if (!MC2000.isButtonOn(value)) return;
-    if (engine.getValue(group, "intro_start_enabled")) {
-        engine.setValue(group, "intro_start_activate", 1);
+    var marker = MC2000.isShiftActive() ? "intro_end" : "intro_start";
+    if (engine.getValue(group, marker + "_enabled")) {
+        engine.setValue(group, marker + "_activate", 1);
     } else if (MC2000.debugMode) {
-        MC2000.debugLog(group + " has no intro start marker");
+        MC2000.debugLog(group + " has no " + marker + " marker");
     }
 };
 
