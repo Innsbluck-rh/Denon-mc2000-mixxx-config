@@ -451,10 +451,9 @@ MC2000.setDefaultMixerLevels = function() {
     // Set headphone volume to 25% (0.25) - safer default
     engine.setValue("[Master]", "headVolume", 0.25);
     
-    // Set FX units wet/dry to dry (0.0)
-    engine.setValue("[EffectRack1_EffectUnit1]", "mix", 0.0);
-    engine.setValue("[EffectRack1_EffectUnit2]", "mix", 0.0);
-    
+    // FX units wet/dry is left as is: it is no longer on the controller (BEATS knobs
+    // do beat jump), so resetting it to dry would silence FX until changed in the GUI
+
     if (MC2000.debugMode) MC2000.debugLog("Default mixer levels set");
 };
 
@@ -1657,23 +1656,10 @@ MC2000.Deck = function(group) {
     // Refactored beatTapBtn.input to use script.bpm.tapButton(deck)
     this.beatTapBtn.input = function(channel, control, value, status, group) {
         if (!this.isPress(channel, control, value, status)) return;
+        // Unshifted press (BPM tap) removed; SHIFT + press still cycles the sampler focus
         if (MC2000.isShiftActive() && typeof this.shift === 'function') {
             this.shift();
-        } else {
-            MC2000.debugLog("Beat Tap button pressed on deck " + self.deckNumber);
-            // Use deckNumber from this SamplerDeck instance
-            console.log("TappButton type: " + typeof bpm.tapButton);
-            if (typeof script !== 'undefined' && bpm.tapButton && typeof bpm.tapButton === 'function') {
-                bpm.tapButton(self.deckNumber);
-            } else {
-                // Fallback to Mixxx engine bpm_tap
-                engine.setValue(group, 'bpm_tap', 1);
-                if (MC2000.debugMode) {
-                    MC2000.debugLog('Fallback: engine.setValue("' + group + '", "bpm_tap", 1)');
-                }
-            }
         }
-        
     };
 
     // beatTapBtn shift method to call fxunit increment sampler focus defined in fx unit   
@@ -2316,6 +2302,22 @@ MC2000.fx1_wetDry = function(channel, control, value, status, group) {
 };
 MC2000.fx2_wetDry = function(channel, control, value, status, group) {
     MC2000.fxWetDry(2, channel, control, value, status, group);
+};
+
+// BEATS knob (L4 / R4): jump 1 beat back/forward on the deck (as in the old mapping).
+// SHIFT keeps the focused sampler gain from the FX unit's shifted encoder.
+// FX wet/dry is no longer on the controller (the fxN_wetDry wrappers above are unmapped).
+MC2000.beatsKnob = function(channel, control, value, status, group) {
+    var unitNumber = (group === "[Channel1]") ? 1 : 2;
+    if (MC2000.isShiftActive()) {
+        MC2000.fxWetDry(unitNumber, channel, control, value, status, group);
+        return;
+    }
+    if (value === 0x01) {
+        engine.setValue(group, "beatjump_1_forward", 1);
+    } else if (value === 0x7F) {
+        engine.setValue(group, "beatjump_1_backward", 1);
+    }
 };
 
 //////////////////////////////

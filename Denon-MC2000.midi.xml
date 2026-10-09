@@ -892,10 +892,10 @@
         <options><Script-Binding/></options>
       </control>
       
-      <!-- FX Unit 1 Wet/Dry (Encoder type) -->
+      <!-- BEATS knob deck 1: 1 beat jump (SHIFT: focused sampler gain) -->
       <control>
-        <group>[EffectRack1_EffectUnit1]</group>
-        <key>MC2000.fx1_wetDry</key>
+        <group>[Channel1]</group>
+        <key>MC2000.beatsKnob</key>
         <status>0xB0</status>
         <midino>0x58</midino>
         <options><Script-Binding/></options>
@@ -972,10 +972,10 @@
         <options><Script-Binding/></options>
       </control>
       
-      <!-- FX Unit 2 Wet/Dry (Encoder type) -->
+      <!-- BEATS knob deck 2: 1 beat jump (SHIFT: focused sampler gain) -->
       <control>
-        <group>[EffectRack1_EffectUnit2]</group>
-        <key>MC2000.fx2_wetDry</key>
+        <group>[Channel2]</group>
+        <key>MC2000.beatsKnob</key>
         <status>0xB0</status>
         <midino>0x5C</midino>
         <options><Script-Binding/></options>
