@@ -530,13 +530,9 @@ MC2000.init = function(id) {
     engine.beginTimer(1000, function() {
         MC2000.LedManager.resetDefaults();
 
-        // Restore FX unit assign LEDs (LOOP IN/OUT), which the reset just turned off
-        Object.keys(MC2000.decks).forEach(function(g) {
-            [1, 2].forEach(function(n) {
-                var btn = MC2000.decks[g].fxAssignBtns[n];
-                btn.output(engine.getValue(btn.group, btn.inKey));
-            });
-        });
+        // The reset turned every LED off; show the current Mixxx state again.
+        // Must run before the keylock blink, which restores the LED state it finds.
+        MC2000.refreshLeds();
 
         //blink key led to show pitch range
         MC2000.decks["[Channel1]"].keylock.blinkLed();
@@ -547,6 +543,38 @@ MC2000.init = function(id) {
         
         MC2000.log("Controller initialized successfully");
     }, true); // one-shot timer
+};
+
+// Send the current Mixxx state to every LED driven by an engine connection.
+// makeConnection only fires on changes, so without this LEDs stay off at startup
+// for anything already on (e.g. keylock enabled by default, FX routing, loaded hotcues).
+MC2000.refreshLeds = function() {
+    Object.keys(MC2000.decks).forEach(function(group) {
+        var d = MC2000.decks[group];
+        d.play.output(engine.getValue(group, "play_indicator"));
+        d.cue.output(engine.getValue(group, "cue_indicator"));
+        d.sync.output(engine.getValue(group, "sync_enabled"));
+        d.keylock.output(engine.getValue(group, "keylock"));
+        d.pfl.output(engine.getValue(group, "pfl"));
+        [1, 2].forEach(function(n) {
+            var btn = d.fxAssignBtns[n];
+            btn.output(engine.getValue(btn.group, btn.inKey));
+        });
+        d.hotcueButtons.forEach(function(btn) {
+            btn.output(engine.getValue(group, "hotcue_" + btn.number + "_enabled"));
+        });
+    });
+    Object.keys(MC2000.fxUnits).forEach(function(u) {
+        [1, 2, 3].forEach(function(e) {
+            var toggle = MC2000.fxUnits[u].effects[e].toggle;
+            toggle.output(engine.getValue(toggle.group, "enabled"));
+        });
+    });
+    Object.keys(MC2000.samplers).forEach(function(n) {
+        var sampler = MC2000.samplers[n];
+        sampler.playButton.output(engine.getValue(sampler.group, "play"));
+    });
+    MC2000.LedManager.reflect("shiftlock", MC2000.shiftLock);
 };
 
 MC2000.shutdown = function() {
