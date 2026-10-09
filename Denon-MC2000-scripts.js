@@ -848,18 +848,18 @@ MC2000.FxUnit = function(unitNumber) {
     this.wetDryEncoder.normalInput = function(channel, control, value, status, group) {
         MC2000.debugLog("FX Unit " + self.unitNumber + " Wet/Dry encoder: " + value);
         if (value === 1) {
-            // Counterclockwise: decrease wet/dry mix
+            // Clockwise: increase wet/dry mix
             this.inSetParameter(this.inGetParameter() + 0.05);
         } else if (value === 127) {
-            // Clockwise: increase wet/dry mix
+            // Counterclockwise: decrease wet/dry mix
             this.inSetParameter(this.inGetParameter() - 0.05);
         }
     };
 
     // Shifted input method: adjust sampler volume instead. sampler index is the sa,pler number
     this.wetDryEncoder.shiftInput = function(channel, control, value, status, group) {
-        // Use value to determine direction works in rev
-        var direction = (value === 127) ? 1 : (value === 1 ? -1 : 0);
+        // Clockwise (0x01) raises the gain, counterclockwise (0x7F) lowers it
+        var direction = (value === 1) ? 1 : (value === 127 ? -1 : 0);
         if (direction === 0) return;
 
         MC2000.debugLog("FX Unit " + self.unitNumber + " Focus " + self.focus + " Wet/Dry encoder shift: " + direction);
@@ -936,11 +936,11 @@ MC2000.buildLibraryControls = function() {
     // Custom input for relative encoder
     MC2000.scrollVerticalEncoder.input = function(channel, control, value, status, group) {
         if (value === 1) {
-            // Counterclockwise: move up
-            engine.setValue("[Library]", "MoveUp", 1);
-        } else if (value === 127) {
-            // Clockwise: move down
+            // Clockwise (spec: 0x01 = increment): move down
             engine.setValue("[Library]", "MoveDown", 1);
+        } else if (value === 127) {
+            // Counterclockwise (0x7F = decrement): move up
+            engine.setValue("[Library]", "MoveUp", 1);
         }
     };
     
