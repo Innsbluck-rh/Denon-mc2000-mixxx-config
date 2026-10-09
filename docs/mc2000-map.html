@@ -303,8 +303,8 @@ const C = [
   {id:"C1", n:"SEL ノブ（回転 / 押し）", s:["c",902,378,33], midi:"B0 54 / 90 28", fn:"回転: ライブラリを上下に移動\n押し: 選択中の項目を開く", sh:"—", led:"—", st:"ok", note:""},
   {id:"C2", n:"BACK", s:["c",842,443,19], midi:"90/80 30", fn:"ライブラリの前の枠へフォーカス移動", sh:"—", led:"—", st:"ok", note:""},
   {id:"C3", n:"FWD", s:["c",962,443,19], midi:"90/80 29", fn:"ライブラリの次の枠へフォーカス移動", sh:"—", led:"—", st:"ok", note:""},
-  {id:"C4", n:"BROWSE 1", s:["c",842,546,19], midi:"90/80 64", fn:"選択曲を試聴デッキに読み込んで再生。再生中なら停止", sh:"—", led:"—", st:"check", note:"#2 修正済み。実機確認待ち。"},
-  {id:"C5", n:"BROWSE 2", s:["c",962,546,19], midi:"90/80 67", fn:"未割当", sh:"—", led:"—", st:"none", note:"空き → #3"},
+  {id:"C4", n:"BROWSE 1", s:["c",842,546,19], midi:"90/80 64", fn:"Deck1 のイントロ開始マーカーへジャンプ", sh:"—", led:"—", st:"check", note:"マーカーが無い曲では何もしない。"},
+  {id:"C5", n:"BROWSE 2", s:["c",962,546,19], midi:"90/80 67", fn:"Deck2 のイントロ開始マーカーへジャンプ", sh:"—", led:"—", st:"check", note:"C4 と同じ。"},
   {id:"C6", n:"SHIFT", s:["r",902,634,72,34], midi:"90/80 60", fn:"押している間 SHIFT", sh:"SHIFT+モニターCUE で SHIFT ロック", led:"02 → SHIFT ロック中", st:"ok", note:"上の小さな LOCK LED が SHIFT ロック表示。"},
   {id:"C7", n:"クロスフェーダー", s:["r",903,1025,220,80], midi:"B0 16", fn:"クロスフェード", sh:"SHIFT 中に動かす: 鳴っている側に相手デッキを一時同期。SHIFT を離すと元の同期設定に戻る", led:"—", st:"ok", note:""},
   {id:"C8", n:"MONITOR PAN（CUE/MASTER）", s:["c",163,378,30], midi:"B0 43", fn:"ヘッドホンの CUE / MASTER バランス", sh:"—", led:"—", st:"ok", note:""},
@@ -317,12 +317,12 @@ const ISSUES = [
   {no:1, title:"右の LEVEL が効かない", ids:["R27"], state:"wait",
    cause:"本体は B1 0C を送る（仕様書）が、XML は B1 01 を待っている。",
    fix:"修正済み: Denon-MC2000.midi.xml の Channel2 trackGain を B1 01 → B1 0C に変更。"},
-  {no:2, title:"BROWSE 1 を押しても試聴デッキが反応しない", ids:["C4"], state:"wait",
+  {no:2, title:"BROWSE 1 を押しても試聴デッキが反応しない", ids:["C4"], state:"done",
    cause:"試聴デッキの再生ボタンを押しているだけで、曲を読み込んでいない。空の試聴デッキは再生しても何も起きない（推定）。",
-   fix:"修正済み: Denon-MC2000-scripts.js の試聴デッキボタンを、停止中なら選択曲を読み込んで再生（LoadSelectedTrackAndPlay）、再生中なら停止に変更。"},
-  {no:3, title:"BROWSE 2 に何も割り当てられていない", ids:["C5"], state:"open",
+   fix:"取り下げ: BROWSE 1 をイントロ開始ジャンプに変更したため不要（試聴デッキ用のコードはスクリプトに残してある）。"},
+  {no:3, title:"BROWSE 2 に何も割り当てられていない", ids:["C5"], state:"done",
    cause:"gThomas99 版で未割当。",
-   fix:"割り当てる機能を決める。"},
+   fix:"完了: BROWSE 2 を Deck2 のイントロ開始マーカーへのジャンプに割当（BROWSE 1 は Deck1）。"},
 ];
 
 const ST = {

@@ -1004,19 +1004,33 @@
         <options><Script-Binding/></options>
       </control>
 
-    <!-- preview deck 1 track -->
+    <!-- BROWSE 1 / BROWSE 2: jump to intro start marker of deck 1 / deck 2 -->
       <control>
-         <group>[PreviewDeck1]</group>
-        <key>MC2000.libraryPreviewButton</key>
+        <group>[Channel1]</group>
+        <key>MC2000.introStartButton</key>
         <status>0x90</status>
         <midino>0x64</midino>
         <options><Script-Binding/></options>
       </control>
       <control>
-        <group>[PreviewDeck1]</group>
-        <key>MC2000.libraryPreviewButton</key>
+        <group>[Channel1]</group>
+        <key>MC2000.introStartButton</key>
         <status>0x80</status>
         <midino>0x64</midino>
+        <options><Script-Binding/></options>
+      </control>
+      <control>
+        <group>[Channel2]</group>
+        <key>MC2000.introStartButton</key>
+        <status>0x90</status>
+        <midino>0x67</midino>
+        <options><Script-Binding/></options>
+      </control>
+      <control>
+        <group>[Channel2]</group>
+        <key>MC2000.introStartButton</key>
+        <status>0x80</status>
+        <midino>0x67</midino>
         <options><Script-Binding/></options>
       </control>
 
