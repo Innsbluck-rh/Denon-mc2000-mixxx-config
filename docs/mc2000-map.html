@@ -103,6 +103,26 @@ tr[hidden] { display: none; }
 .card ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
 .card table { min-width: 0; font-size: 12.5px; }
 .card td, .card th { padding: 5px 8px; }
+.issues { display: grid; gap: 10px; }
+.issue {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px 14px; align-items: baseline;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px;
+}
+.issue .num { font: 600 15px var(--font-mono); color: var(--muted); grid-row: span 3; }
+.issue .ttl { font-weight: 700; }
+.issue .meta, .issue .body { grid-column: 2 / 4; font-size: 13px; }
+.issue .meta { color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.issue .body { display: grid; gap: 2px; }
+.issue .body b { font-weight: 500; color: var(--muted); margin-right: 6px; }
+.issue.closed { opacity: .55; }
+.idlink {
+  font: 600 12px var(--font-mono); color: var(--accent); background: none; cursor: pointer;
+  border: 1px solid var(--line); border-radius: 6px; padding: 1px 7px;
+}
+.idlink:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.istate { font-size: 12px; white-space: nowrap; border-radius: 999px; padding: 1px 10px; border: 1px solid currentColor; }
+.istate.open { color: var(--warn); } .istate.wait { color: var(--check); } .istate.done { color: var(--ok); }
+@media (max-width: 520px) { .issue { grid-template-columns: auto minmax(0, 1fr); } .issue .istate { grid-column: 2; justify-self: start; } }
 .src { color: var(--muted); font-size: 12.5px; }
 .src a { color: var(--accent); }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
@@ -113,6 +133,11 @@ tr[hidden] { display: none; }
     <h1>Denon MC2000 コントロールマップ</h1>
     <p class="lede">写真上の番号で各ノブ・ボタンを呼び分けるための対応表です。番号は左デッキ <b>L</b>・右デッキ <b>R</b> が鏡像で同じ番号、中央の共通部分が <b>C</b>。「R6のSHIFT時を○○にして」のように指定してください。内容は gThomas99 版（v0.1.1-pre-beta）の <code>Denon-MC2000.midi.xml</code> / <code>Denon-MC2000-scripts.js</code> を読んだ結果です。</p>
   </header>
+
+  <section aria-labelledby="issues-h">
+    <h2 id="issues-h">Issue</h2>
+    <div class="issues" id="issues"></div>
+  </section>
 
   <section aria-label="状態フィルター" class="legend" id="legend"></section>
 
@@ -159,13 +184,12 @@ tr[hidden] { display: none; }
       </ul>
     </div>
     <div class="card">
-      <h2>気になる点</h2>
+      <h2>VINYL / SAMPLE MODE の仕組み</h2>
       <ul>
-        <li>VINYL MODE（L21/R21）のLEDがモードに連動せず、常に点灯したまま。</li>
-        <li>SAMPLE MODE のLEDに <code>1A</code> を送っているが、仕様書の番号は左 <code>23</code>・右 <code>49</code>。点かない可能性が高い。</li>
-        <li>FXノブ（1–3）は値をそのまま受ける設定。仕様書では回した量の差分で届くので、回すと値が飛ぶかもしれない。</li>
-        <li>右の LEVEL（R27）は仕様書では <code>B1 0C</code> だが、XML は <code>B1 01</code> を見ている。</li>
-        <li>BROWSE 2（C5）は空き。</li>
+        <li>どちらもモード切替は本体側で行われます。ON/OFF で本体が送ってくる番号そのものが変わり、LED も本体が自分で点け消しします。</li>
+        <li>VINYL ON: ジョグ天面タッチ <code>51</code>・回転 <code>51</code>。OFF: タッチ <code>56</code>（未割当なのでスクラッチしない）・回転 <code>52</code>（ピッチベンド）。</li>
+        <li>SAMPLE OFF: パッドは <code>17 18 19 20</code>（ホットキュー）。ON: 左 <code>21–24</code>・右 <code>31–34</code>（サンプラー）。</li>
+        <li>そのため Mixxx の画面にはモード表示がありません。動作で見分けます。</li>
       </ul>
     </div>
     <div class="card">
@@ -200,9 +224,9 @@ tr[hidden] { display: none; }
 const C = [
   // ---------- 左デッキ ----------
   {g:"左デッキ  FX1"},
-  {id:"L1", n:"FX1 ノブ 1", s:["c",275,205,32], midi:"B0 55", fn:"FX1 エフェクト1 のメタノブ", sh:"—", led:"—", st:"check", note:"値の受け方が絶対値。飛ぶようなら直す。"},
-  {id:"L2", n:"FX1 ノブ 2", s:["c",398,205,32], midi:"B0 56", fn:"FX1 エフェクト2 のメタノブ", sh:"—", led:"—", st:"check", note:"L1 と同じ。"},
-  {id:"L3", n:"FX1 ノブ 3", s:["c",518,205,32], midi:"B0 57", fn:"FX1 エフェクト3 のメタノブ", sh:"—", led:"—", st:"check", note:"L1 と同じ。"},
+  {id:"L1", n:"FX1 ノブ 1", s:["c",275,205,32], midi:"B0 55", fn:"FX1 エフェクト1 のメタノブ", sh:"—", led:"—", st:"ok", note:"回すと値が飛ぶが、従来どおりなのでこのままにする。"},
+  {id:"L2", n:"FX1 ノブ 2", s:["c",398,205,32], midi:"B0 56", fn:"FX1 エフェクト2 のメタノブ", sh:"—", led:"—", st:"ok", note:"L1 と同じ。"},
+  {id:"L3", n:"FX1 ノブ 3", s:["c",518,205,32], midi:"B0 57", fn:"FX1 エフェクト3 のメタノブ", sh:"—", led:"—", st:"ok", note:"L1 と同じ。"},
   {id:"L4", n:"BEATS ノブ（回転 / 押し）", s:["c",640,207,38], midi:"B0 58 / 90 40", fn:"回転: FX1 のドライ/ウェット\n押し: Deck1 の BPM タップ", sh:"回転: 選択中サンプラー（1–4）の音量\n押し: 選択サンプラーを 1→2→3→4 と切替", led:"—", st:"ok", note:"サンプラーを切り替えると、そのパッドが点滅する。"},
   {id:"L5", n:"FX1 ボタン 1", s:["r",282,282,76,38], midi:"90/80 15", fn:"FX1 エフェクト1 ON/OFF", sh:"—", led:"5C (92) → ON/OFF", st:"ok", note:""},
   {id:"L6", n:"FX1 ボタン 2", s:["r",401,282,76,38], midi:"90/80 12", fn:"FX1 エフェクト2 ON/OFF", sh:"—", led:"5D (93) → ON/OFF", st:"ok", note:""},
@@ -217,12 +241,12 @@ const C = [
   {id:"L14", n:"HOT CUE 2", s:["r",401,441,76,38], midi:"90/80 18\nSAMPLE時 90 22", fn:"ホットキュー2 / サンプラー2", sh:"削除 / 空にする", led:"13 (19) / 1B (27)", st:"ok", note:""},
   {id:"L15", n:"HOT CUE 3", s:["r",521,441,76,38], midi:"90/80 19\nSAMPLE時 90 23", fn:"ホットキュー3 / サンプラー3", sh:"削除 / 空にする", led:"15 (21) / 1D (29)", st:"ok", note:""},
   {id:"L16", n:"HOT CUE 4", s:["r",641,441,76,38], midi:"90/80 20\nSAMPLE時 90 24", fn:"ホットキュー4 / サンプラー4", sh:"削除 / 空にする", led:"17 (23) / 20 (32)", st:"ok", note:""},
-  {id:"L17", n:"SAMPLE MODE", s:["c",641,521,18], midi:"90/80 1A", fn:"パッドを HOT CUE / SAMPLE で切替", sh:"—", led:"1A に送信（仕様書は 23）", st:"warn", note:"横の ON LED が点かない可能性。"},
+  {id:"L17", n:"SAMPLE MODE", s:["c",641,521,18], midi:"90/80 1A", fn:"パッドを HOT CUE / SAMPLE で切替", sh:"—", led:"本体が自分で点灯/消灯", st:"ok", note:"切替は本体側。LED・動作とも確認済み。"},
   {g:"左デッキ  下部"},
   {id:"L18", n:"KEY LOCK", s:["c",170,686,17], midi:"90/80 06", fn:"キーロック ON/OFF", sh:"ピッチ幅を 6→8→12→50% と切替", led:"08 → キーロック\n幅切替時は点滅回数で表示", st:"ok", note:""},
   {id:"L19", n:"ピッチフェーダー", s:["r",168,912,70,270], midi:"E0", fn:"テンポ（rate）", sh:"—", led:"—", st:"ok", note:""},
   {id:"L20", n:"ジョグホイール", s:["c",458,762,220], midi:"タッチ 90/80 51\n回転 B0 51 / 52", fn:"VINYL ON: 天面タッチでスクラッチ、触らず回すとピッチベンド\nVINYL OFF: ピッチベンドのみ", sh:"曲の中を細かくシーク", led:"—", st:"ok", note:""},
-  {id:"L21", n:"VINYL MODE", s:["c",642,946,19], midi:"90/80 04", fn:"スクラッチの有効/無効を切替", sh:"—", led:"06 → 常に点灯", st:"warn", note:"LED がモードに連動しない。"},
+  {id:"L21", n:"VINYL MODE", s:["c",642,946,19], midi:"90/80 04", fn:"スクラッチの有効/無効を切替（本体側）", sh:"—", led:"本体が自分で点灯/消灯", st:"ok", note:"切替は本体側。LED・動作とも確認済み。"},
   {id:"L22", n:"SYNC", s:["r",281,1028,70,34], midi:"90/80 6B", fn:"短押し: 1回だけ同期（LED点滅）\n長押し: 同期ロックON\nロック中に押す: OFF", sh:"同期ロックを切替", led:"09 → 同期ロック", st:"ok", note:""},
   {id:"L23", n:"CUE", s:["r",410,1027,88,56], midi:"90/80 42", fn:"CDJ式キュー", sh:"曲の先頭へ戻る", led:"26 (38) → キュー表示", st:"ok", note:""},
   {id:"L24", n:"PLAY / PAUSE", s:["r",514,1027,88,56], midi:"90/80 43", fn:"再生/一時停止", sh:"キュー点から再生", led:"27 (39) → 再生表示", st:"ok", note:""},
@@ -238,9 +262,9 @@ const C = [
   {id:"L33", n:"LOAD A", s:["c",842,298,23], midi:"90/80 62", fn:"選択曲を Deck1 に読込", sh:"Deck1 を空にする", led:"—", st:"ok", note:""},
   // ---------- 右デッキ ----------
   {g:"右デッキ  FX2"},
-  {id:"R1", n:"FX2 ノブ 1", s:["c",1165,205,32], midi:"B0 59", fn:"FX2 エフェクト1 のメタノブ", sh:"—", led:"—", st:"check", note:"L1 と同じ。"},
-  {id:"R2", n:"FX2 ノブ 2", s:["c",1287,205,32], midi:"B0 5A", fn:"FX2 エフェクト2 のメタノブ", sh:"—", led:"—", st:"check", note:""},
-  {id:"R3", n:"FX2 ノブ 3", s:["c",1405,205,32], midi:"B0 5B", fn:"FX2 エフェクト3 のメタノブ", sh:"—", led:"—", st:"check", note:""},
+  {id:"R1", n:"FX2 ノブ 1", s:["c",1165,205,32], midi:"B0 59", fn:"FX2 エフェクト1 のメタノブ", sh:"—", led:"—", st:"ok", note:"L1 と同じ。"},
+  {id:"R2", n:"FX2 ノブ 2", s:["c",1287,205,32], midi:"B0 5A", fn:"FX2 エフェクト2 のメタノブ", sh:"—", led:"—", st:"ok", note:"L1 と同じ。"},
+  {id:"R3", n:"FX2 ノブ 3", s:["c",1405,205,32], midi:"B0 5B", fn:"FX2 エフェクト3 のメタノブ", sh:"—", led:"—", st:"ok", note:"L1 と同じ。"},
   {id:"R4", n:"BEATS ノブ（回転 / 押し）", s:["c",1525,207,38], midi:"B0 5C / 90 41", fn:"回転: FX2 のドライ/ウェット\n押し: Deck2 の BPM タップ", sh:"回転: 選択中サンプラー（5–8）の音量\n押し: 選択サンプラーを 5→6→7→8 と切替", led:"—", st:"ok", note:""},
   {id:"R5", n:"FX2 ボタン 1", s:["r",1162,282,76,38], midi:"90/80 55", fn:"FX2 エフェクト1 ON/OFF", sh:"—", led:"60 (96) → ON/OFF", st:"ok", note:""},
   {id:"R6", n:"FX2 ボタン 2", s:["r",1282,282,76,38], midi:"90/80 52", fn:"FX2 エフェクト2 ON/OFF", sh:"—", led:"61 (97) → ON/OFF", st:"ok", note:""},
@@ -255,19 +279,19 @@ const C = [
   {id:"R14", n:"HOT CUE 2", s:["r",1282,441,76,38], midi:"91/81 18\nSAMPLE時 91 32", fn:"ホットキュー2 / サンプラー6", sh:"削除 / 空にする", led:"13 (19) / 43 (67)", st:"ok", note:""},
   {id:"R15", n:"HOT CUE 3", s:["r",1402,441,76,38], midi:"91/81 19\nSAMPLE時 91 33", fn:"ホットキュー3 / サンプラー7", sh:"削除 / 空にする", led:"15 (21) / 45 (69)", st:"ok", note:""},
   {id:"R16", n:"HOT CUE 4", s:["r",1522,441,76,38], midi:"91/81 20\nSAMPLE時 91 34", fn:"ホットキュー4 / サンプラー8", sh:"削除 / 空にする", led:"17 (23) / 47 (71)", st:"ok", note:""},
-  {id:"R17", n:"SAMPLE MODE", s:["c",1523,519,18], midi:"91/81 1A", fn:"パッドを HOT CUE / SAMPLE で切替", sh:"—", led:"1A に送信（仕様書は 49）", st:"warn", note:"L17 と同じ。"},
+  {id:"R17", n:"SAMPLE MODE", s:["c",1523,519,18], midi:"91/81 1A", fn:"パッドを HOT CUE / SAMPLE で切替", sh:"—", led:"本体が自分で点灯/消灯", st:"ok", note:"L17 と同じ。サンプラー5–8を使う。"},
   {g:"右デッキ  下部"},
   {id:"R18", n:"KEY LOCK", s:["c",1636,684,17], midi:"91/81 06", fn:"キーロック ON/OFF", sh:"ピッチ幅を 6→8→12→50% と切替", led:"08 → キーロック", st:"ok", note:""},
   {id:"R19", n:"ピッチフェーダー", s:["r",1636,912,70,270], midi:"E1", fn:"テンポ（rate）", sh:"—", led:"—", st:"ok", note:""},
   {id:"R20", n:"ジョグホイール", s:["c",1342,760,220], midi:"タッチ 91/81 51\n回転 B1 51 / 52", fn:"L20 と同じ", sh:"曲の中を細かくシーク", led:"—", st:"ok", note:""},
-  {id:"R21", n:"VINYL MODE", s:["c",1521,944,19], midi:"91/81 04", fn:"スクラッチの有効/無効を切替", sh:"—", led:"06 → 常に点灯", st:"warn", note:"L21 と同じ。"},
+  {id:"R21", n:"VINYL MODE", s:["c",1521,944,19], midi:"91/81 04", fn:"スクラッチの有効/無効を切替（本体側）", sh:"—", led:"本体が自分で点灯/消灯", st:"ok", note:"L21 と同じ。"},
   {id:"R22", n:"SYNC", s:["r",1162,1026,70,34], midi:"91/81 6B", fn:"短押し: 1回だけ同期\n長押し: 同期ロックON\nロック中に押す: OFF", sh:"同期ロックを切替", led:"09 → 同期ロック", st:"ok", note:""},
   {id:"R23", n:"CUE", s:["r",1290,1026,88,56], midi:"91/81 42", fn:"CDJ式キュー", sh:"曲の先頭へ戻る", led:"26 (38) → キュー表示", st:"ok", note:""},
   {id:"R24", n:"PLAY / PAUSE", s:["r",1395,1026,88,56], midi:"91/81 43", fn:"再生/一時停止", sh:"キュー点から再生", led:"27 (39) → 再生表示", st:"ok", note:""},
   {id:"R25", n:"PITCH BEND −", s:["c",1497,1026,17], midi:"91/81 0D", fn:"押している間だけ減速", sh:"32拍戻る", led:"—", st:"ok", note:""},
   {id:"R26", n:"PITCH BEND +", s:["c",1549,1026,17], midi:"91/81 0C", fn:"押している間だけ加速", sh:"32拍進む", led:"—", st:"ok", note:""},
   {g:"右チャンネル  ミキサー"},
-  {id:"R27", n:"LEVEL", s:["c",1050,208,26], midi:"B1 01（仕様書は B1 0C）", fn:"フィルター（クイックエフェクト）", sh:"—", led:"—", st:"check", note:"番号がずれていて効かない可能性。"},
+  {id:"R27", n:"LEVEL", s:["c",1050,208,26], midi:"B1 0C", fn:"フィルター（クイックエフェクト）", sh:"—", led:"—", st:"check", note:"#1 修正済み。実機確認待ち。"},
   {id:"R28", n:"EQ HI", s:["c",1050,322,25], midi:"B1 0D", fn:"EQ 高域", sh:"—", led:"—", st:"ok", note:""},
   {id:"R29", n:"EQ MID", s:["c",1050,433,25], midi:"B1 0E", fn:"EQ 中域", sh:"—", led:"—", st:"ok", note:""},
   {id:"R30", n:"EQ LOW", s:["c",1050,545,25], midi:"B1 0F", fn:"EQ 低域", sh:"—", led:"—", st:"ok", note:""},
@@ -279,13 +303,26 @@ const C = [
   {id:"C1", n:"SEL ノブ（回転 / 押し）", s:["c",902,378,33], midi:"B0 54 / 90 28", fn:"回転: ライブラリを上下に移動\n押し: 選択中の項目を開く", sh:"—", led:"—", st:"ok", note:""},
   {id:"C2", n:"BACK", s:["c",842,443,19], midi:"90/80 30", fn:"ライブラリの前の枠へフォーカス移動", sh:"—", led:"—", st:"ok", note:""},
   {id:"C3", n:"FWD", s:["c",962,443,19], midi:"90/80 29", fn:"ライブラリの次の枠へフォーカス移動", sh:"—", led:"—", st:"ok", note:""},
-  {id:"C4", n:"BROWSE 1", s:["c",842,546,19], midi:"90/80 64", fn:"選択曲を試聴デッキで再生/停止", sh:"—", led:"—", st:"ok", note:""},
-  {id:"C5", n:"BROWSE 2", s:["c",962,546,19], midi:"90/80 67", fn:"未割当", sh:"—", led:"—", st:"none", note:"空き。何か割り当てられる。"},
+  {id:"C4", n:"BROWSE 1", s:["c",842,546,19], midi:"90/80 64", fn:"選択曲を試聴デッキに読み込んで再生。再生中なら停止", sh:"—", led:"—", st:"check", note:"#2 修正済み。実機確認待ち。"},
+  {id:"C5", n:"BROWSE 2", s:["c",962,546,19], midi:"90/80 67", fn:"未割当", sh:"—", led:"—", st:"none", note:"空き → #3"},
   {id:"C6", n:"SHIFT", s:["r",902,634,72,34], midi:"90/80 60", fn:"押している間 SHIFT", sh:"SHIFT+モニターCUE で SHIFT ロック", led:"02 → SHIFT ロック中", st:"ok", note:"上の小さな LOCK LED が SHIFT ロック表示。"},
   {id:"C7", n:"クロスフェーダー", s:["r",903,1025,220,80], midi:"B0 16", fn:"クロスフェード", sh:"SHIFT 中に動かす: 鳴っている側に相手デッキを一時同期。SHIFT を離すと元の同期設定に戻る", led:"—", st:"ok", note:""},
   {id:"C8", n:"MONITOR PAN（CUE/MASTER）", s:["c",163,378,30], midi:"B0 43", fn:"ヘッドホンの CUE / MASTER バランス", sh:"—", led:"—", st:"ok", note:""},
   {id:"C9", n:"PHONES", s:["c",165,500,30], midi:"B0 44", fn:"ヘッドホン音量", sh:"—", led:"—", st:"ok", note:""},
   {id:"C10", n:"MASTER LEVEL", s:["c",1637,378,30], midi:"B0 19", fn:"マスター音量", sh:"—", led:"—", st:"ok", note:""},
+];
+
+// state: open 未着手 / wait 確認待ち / done 完了
+const ISSUES = [
+  {no:1, title:"右の LEVEL が効かない", ids:["R27"], state:"wait",
+   cause:"本体は B1 0C を送る（仕様書）が、XML は B1 01 を待っている。",
+   fix:"修正済み: Denon-MC2000.midi.xml の Channel2 trackGain を B1 01 → B1 0C に変更。"},
+  {no:2, title:"BROWSE 1 を押しても試聴デッキが反応しない", ids:["C4"], state:"wait",
+   cause:"試聴デッキの再生ボタンを押しているだけで、曲を読み込んでいない。空の試聴デッキは再生しても何も起きない（推定）。",
+   fix:"修正済み: Denon-MC2000-scripts.js の試聴デッキボタンを、停止中なら選択曲を読み込んで再生（LoadSelectedTrackAndPlay）、再生中なら停止に変更。"},
+  {no:3, title:"BROWSE 2 に何も割り当てられていない", ids:["C5"], state:"open",
+   cause:"gThomas99 版で未割当。",
+   fix:"割り当てる機能を決める。"},
 ];
 
 const ST = {
@@ -357,6 +394,27 @@ for (const c of C) {
   g.addEventListener("click", go);
   g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
 }
+
+// issues
+const IST = {open:"未着手", wait:"確認待ち", done:"完了"};
+const issuesEl = document.getElementById("issues");
+function jumpTo(id) {
+  const tr = rowById[id], g = zoneById[id];
+  if (!tr) return;
+  if (tr.hidden) { active.add(tr.dataset.st); document.getElementById(`f-${tr.dataset.st}`)?.setAttribute("aria-pressed", "true"); applyFilter(); }
+  tr.scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center"});
+  tr.classList.remove("flash"); void tr.offsetWidth; tr.classList.add("flash");
+  g.classList.add("on"); setTimeout(() => g.classList.remove("on"), 1400);
+}
+for (const it of ISSUES) {
+  const d = document.createElement("article");
+  d.className = "issue" + (it.state === "done" ? " closed" : "");
+  d.innerHTML = `<span class="num">#${it.no}</span><span class="ttl">${esc(it.title)}</span><span class="istate ${it.state}">${IST[it.state]}</span>` +
+    `<div class="meta">対象 ${it.ids.map(id => `<button type="button" class="idlink" data-id="${id}">${id}</button>`).join("")}</div>` +
+    `<div class="body"><span><b>原因</b>${esc(it.cause)}</span><span><b>対応</b>${esc(it.fix)}</span></div>`;
+  issuesEl.appendChild(d);
+}
+issuesEl.addEventListener("click", e => { const b = e.target.closest(".idlink"); if (b) jumpTo(b.dataset.id); });
 
 // legend / filter
 const counts = {};

@@ -966,8 +966,20 @@ MC2000.PreviewDeck = function() {
     this.playButton = new components.Button({
         group: this.group,
         inKey: "play",
-        type: components.Button.prototype.types.toggle,
+        type: components.Button.prototype.types.push,
     });
+    // Custom input: load selected track and play if stopped, stop if playing
+    // (plain play toggle did nothing because the preview deck is empty until a track is loaded)
+    this.playButton.input = function(channel, control, value, status, group) {
+        if (!this.isPress(channel, control, value, status)) return; // Only act on press
+        if (engine.getValue(this.group, "play")) {
+            engine.setValue(this.group, "play", 0);
+            if (MC2000.debugMode) MC2000.debugLog("PreviewDeck: stop");
+        } else {
+            engine.setValue(this.group, "LoadSelectedTrackAndPlay", 1);
+            if (MC2000.debugMode) MC2000.debugLog("PreviewDeck: load selected track and play");
+        }
+    };
     this.playButton.output = function(value) {
         // No LED, but could log or trigger feedback
         if (MC2000.debugMode) MC2000.debugLog("PreviewDeck play: " + value);
