@@ -1066,7 +1066,7 @@
         <options><Script-Binding/></options>
       </control>
 
-      <!-- Beat Tap (tempo tap) buttons Both use 0x90/80 channel 1-->
+      <!-- BEATS knob press: filter reset (SHIFT: deck level reset). Both use 0x90/80 channel 1-->
       <control>
         <group>[Channel1]</group>
         <key>MC2000.beatTap1</key>

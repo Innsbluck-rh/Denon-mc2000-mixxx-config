@@ -1645,12 +1645,15 @@ MC2000.Deck = function(group) {
     this.beatTapBtn.fxUnit = undefined; // to be set after FX units are built
 
 
-    // Refactored beatTapBtn.input to use script.bpm.tapButton(deck)
+    // BEATS knob press: reset the LEVEL knob targets to center (the knob has no detent).
+    // Press = filter reset, SHIFT + press = deck pregain reset.
+    // Replaces BPM tap and the SHIFT sampler focus cycling (this.shift below is now unused).
     this.beatTapBtn.input = function(channel, control, value, status, group) {
         if (!this.isPress(channel, control, value, status)) return;
-        // Unshifted press (BPM tap) removed; SHIFT + press still cycles the sampler focus
-        if (MC2000.isShiftActive() && typeof this.shift === 'function') {
-            this.shift();
+        if (MC2000.isShiftActive()) {
+            engine.setValue(group, "pregain_set_default", 1);
+        } else {
+            engine.setValue("[QuickEffectRack1_" + group + "]", "super1_set_default", 1);
         }
     };
 
