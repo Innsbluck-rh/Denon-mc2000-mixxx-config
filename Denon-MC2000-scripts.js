@@ -635,10 +635,7 @@ MC2000.buildMasterControls = function() {
     
     // Crossfader
     // Normal: controls master crossfader.
-    MC2000.crossfaderPot = new components.Pot({
-        group: "[Master]",
-        inKey: "crossfader"
-    });
+    MC2000.crossfaderPot = new MC2000.PickupKnob({ group: "[Master]", key: "crossfader" }); // no jump, see master volume
     // Sync state snapshot storage
     MC2000.crossfaderPot._savedSyncStates = null;
     MC2000.crossfaderPot._playingDeck = null;
@@ -1562,13 +1559,14 @@ MC2000.Deck = function(group) {
         this.trackGain = new MC2000.PickupKnob(gainLayer, filterLayer);
     }
 
-    // Volume: channel volume fader
-    this.volume = new components.Pot({ group: group, inKey: "volume" });
+    // Volume: channel volume fader (PickupKnob: no jump on first touch, see master volume)
+    this.volume = new MC2000.PickupKnob({ group: group, key: "volume" });
 
-    // EQ: high, mid, low knobs (mid always EQ)
-    this.eqHigh = new components.Pot({ group: "[EqualizerRack1_" + group + "_Effect1]", inKey: "parameter3" });
-    this.eqMid = new components.Pot({ group: "[EqualizerRack1_" + group + "_Effect1]", inKey: "parameter2" });
-    this.eqLow = new components.Pot({ group: "[EqualizerRack1_" + group + "_Effect1]", inKey: "parameter1" });
+    // EQ: high, mid, low knobs (mid always EQ), no jump either
+    var eqGroup = "[EqualizerRack1_" + group + "_Effect1]";
+    this.eqHigh = new MC2000.PickupKnob({ group: eqGroup, key: "parameter3" });
+    this.eqMid = new MC2000.PickupKnob({ group: eqGroup, key: "parameter2" });
+    this.eqLow = new MC2000.PickupKnob({ group: eqGroup, key: "parameter1" });
 
     // Pitch: simple pot to rate parameter
     this.rate = new components.Pot({ group: group, inKey: "rate" });
