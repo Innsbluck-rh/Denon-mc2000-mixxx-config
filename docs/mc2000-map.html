@@ -1,0 +1,387 @@
+<title>MC2000 コントロールマップ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: annotated panel photo on top, a filterable control register below, protocol notes last. */
+:root {
+  --bg: #eef0f3;
+  --surface: #ffffff;
+  --fg: #1b1f27;
+  --muted: #5d6573;
+  --line: #d3d8e0;
+  --accent: #2f6fe4;      /* the MC2000 FX-button blue */
+  --shift: #7a4fd6;
+  --ok: #1f9d55;
+  --check: #2f6fe4;
+  --warn: #c98a00;
+  --bad: #d23a3a;
+  --none: #8a919d;
+  --hl: rgba(47,111,228,.12);
+  --font-body: "IBM Plex Sans JP", "Hiragino Sans", "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14171c; --surface: #1c2027; --fg: #e6e9ee; --muted: #98a0ad; --line: #2f3540;
+    --accent: #6b9bff; --shift: #b59bff; --ok: #3ccf7d; --check: #6b9bff; --warn: #f0b429; --bad: #ff6b6b; --none: #7d8592;
+    --hl: rgba(107,155,255,.16); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14171c; --surface: #1c2027; --fg: #e6e9ee; --muted: #98a0ad; --line: #2f3540;
+  --accent: #6b9bff; --shift: #b59bff; --ok: #3ccf7d; --check: #6b9bff; --warn: #f0b429; --bad: #ff6b6b; --none: #7d8592;
+  --hl: rgba(107,155,255,.16); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 14px; line-height: 1.6;
+  padding-inline: 16px; padding-block: 24px 48px;
+}
+main { max-width: 1280px; margin: 0 auto; display: grid; gap: 28px; }
+h1 { font-size: 1.6rem; margin: 0; line-height: 1.3; text-wrap: balance; }
+h2 { font-size: 1.15rem; margin: 0 0 10px; text-wrap: balance; }
+p { margin: 0; max-width: 76ch; }
+.lede { color: var(--muted); }
+header { display: grid; gap: 6px; }
+code, .mono { font-family: var(--font-mono); font-size: .92em; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
+  border: 1px solid var(--line); border-radius: 999px; background: var(--surface);
+  color: var(--fg); font: inherit; font-size: 13px; cursor: pointer;
+}
+.chip[aria-pressed="false"] { opacity: .45; }
+.chip:focus-visible, .zone:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: currentColor; flex: none; }
+.s-ok { color: var(--ok); } .s-check { color: var(--check); } .s-warn { color: var(--warn); }
+.s-bad { color: var(--bad); } .s-none { color: var(--none); }
+.chip .lbl { color: var(--fg); }
+.chip .n { color: var(--muted); font-family: var(--font-mono); font-size: 12px; }
+
+.panel-wrap { overflow-x: auto; border-radius: 10px; background: #fff; border: 1px solid var(--line); }
+.panel { display: block; width: 100%; min-width: 860px; height: auto; }
+.zone { cursor: pointer; }
+.zone .shape { fill: rgba(255,255,255,0); stroke-width: 3; transition: fill .12s; }
+.zone .pill { stroke: none; }
+.zone text { font: 600 21px var(--font-mono); fill: #fff; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+.zone.on .shape { fill: rgba(255,255,255,.28); stroke-width: 5; }
+.zone.dim { opacity: .12; }
+.st-ok .shape { stroke: #1f9d55; } .st-ok .pill { fill: #1f9d55; }
+.st-check .shape { stroke: #2f6fe4; } .st-check .pill { fill: #2f6fe4; }
+.st-warn .shape { stroke: #e0a100; } .st-warn .pill { fill: #b97e00; }
+.st-bad .shape { stroke: #e04343; } .st-bad .pill { fill: #d23a3a; }
+.st-none .shape { stroke: #9aa1ac; stroke-dasharray: 8 6; } .st-none .pill { fill: #6f7682; }
+.hint { color: var(--muted); font-size: 13px; }
+
+.scheme { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.scheme div { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; min-width: 0; }
+.scheme b { font-family: var(--font-mono); }
+
+.table-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; min-width: 1100px; font-size: 13px; }
+th, td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+th { position: sticky; top: 0; background: var(--surface); font-size: 12px; letter-spacing: .04em; color: var(--muted); font-weight: 500; }
+th.sh { color: var(--shift); }
+tbody tr { transition: background .12s; }
+tbody tr.on { background: var(--hl); }
+tbody tr.flash { animation: flash 1.2s ease-out; }
+@keyframes flash { from { background: var(--hl); box-shadow: inset 4px 0 0 var(--accent); } }
+td.id { font-family: var(--font-mono); font-weight: 600; white-space: nowrap; }
+td.midi, td.led { font-family: var(--font-mono); font-size: 12px; white-space: nowrap; }
+td.fn { min-width: 220px; }
+td.sh { min-width: 180px; color: var(--shift); }
+td.note { min-width: 200px; color: var(--muted); }
+.badge { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; font-size: 12px; }
+tr.group td { background: var(--bg); font-weight: 700; font-size: 12px; letter-spacing: .05em; color: var(--muted); }
+tr[hidden] { display: none; }
+
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; min-width: 0; }
+.card ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+.card table { min-width: 0; font-size: 12.5px; }
+.card td, .card th { padding: 5px 8px; }
+.src { color: var(--muted); font-size: 12.5px; }
+.src a { color: var(--accent); }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<main>
+  <header>
+    <h1>Denon MC2000 コントロールマップ</h1>
+    <p class="lede">写真上の番号で各ノブ・ボタンを呼び分けるための対応表です。番号は左デッキ <b>L</b>・右デッキ <b>R</b> が鏡像で同じ番号、中央の共通部分が <b>C</b>。「R6のSHIFT時を○○にして」のように指定してください。内容は gThomas99 版（v0.1.1-pre-beta）の <code>Denon-MC2000.midi.xml</code> / <code>Denon-MC2000-scripts.js</code> を読んだ結果です。</p>
+  </header>
+
+  <section aria-label="状態フィルター" class="legend" id="legend"></section>
+
+  <section>
+    <div class="panel-wrap">
+      <svg class="panel" id="panel" viewBox="0 0 1800 1200" role="img" aria-label="MC2000 天板写真と番号付きコントロール">
+        <image href="mc2000.jpg" x="0" y="0" width="1800" height="1200"/>
+        <g id="zones"></g>
+      </svg>
+    </div>
+    <p class="hint">枠にカーソルを乗せると下の表の行が光り、クリックするとその行へ移動します。表の行に乗せても写真側が光ります。</p>
+  </section>
+
+  <section class="scheme" aria-label="番号の付け方">
+    <div><b>L1–L7 / R1–R7</b><br>FXセクション。1–3 がFXノブ、4 が BEATS ノブ（押し込み可）、5–7 がFXボタン。</div>
+    <div><b>L8–L17 / R8–R17</b><br>LOOP 列（IN, OUT, −, AUTO, +）、HOT CUE 1–4、SAMPLE MODE。</div>
+    <div><b>L18–L26 / R18–R26</b><br>デッキ下部。KEY LOCK、ピッチフェーダー、ジョグ、VINYL MODE、SYNC、CUE、PLAY、PITCH BEND −/+。</div>
+    <div><b>L27–L33 / R27–R33</b><br>ミキサーのチャンネル列。LEVEL、HI、MID、LOW、フェーダー、モニターCUE、LOAD A/B。</div>
+    <div><b>C1–C10</b><br>中央と両端の共通部。SEL、BACK、FWD、BROWSE1/2、SHIFT、クロスフェーダー、MONITOR PAN、PHONES、MASTER。</div>
+  </section>
+
+  <section>
+    <h2>コントロール一覧</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>番号</th><th>名称</th><th>MIDI入力</th><th>通常時</th><th class="sh">SHIFT時</th><th>LED（番号 → 連動先）</th><th>状態</th><th>メモ</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="notes">
+    <div class="card">
+      <h2>起動時と設定スイッチ</h2>
+      <ul>
+        <li>起動すると全LEDが1秒点灯してから通常表示に戻ります。KEY LOCK の点滅回数が現在のピッチ幅です。</li>
+        <li>音量・EQ・ピッチを安全な値に戻し、Deck1 のモニターCUEをONにします。ノブを少し動かすと実機の位置が反映されます。</li>
+        <li>スクリプト先頭の <code>MC2000Config</code> で挙動を切り替えられます。
+          <code>pregainAsFilter</code>（LEVEL をフィルターにする、現在 ON）、
+          <code>useAltPitchBend</code>（SHIFT+BEND を32拍ジャンプにする、現在 ON）、
+          <code>useAltPlayShift</code>（SHIFT+PLAY を逆再生ロールにする、現在 OFF）、
+          <code>setVolumeToSafeDefault</code>（起動時の音量リセット、現在 ON）。</li>
+        <li>FX をどのデッキに通すかは Mixxx の画面で選びます。初期状態は FX1 が Deck1、FX2 が Deck2。</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>気になる点</h2>
+      <ul>
+        <li>VINYL MODE（L21/R21）のLEDがモードに連動せず、常に点灯したまま。</li>
+        <li>SAMPLE MODE のLEDに <code>1A</code> を送っているが、仕様書の番号は左 <code>23</code>・右 <code>49</code>。点かない可能性が高い。</li>
+        <li>FXノブ（1–3）は値をそのまま受ける設定。仕様書では回した量の差分で届くので、回すと値が飛ぶかもしれない。</li>
+        <li>右の LEVEL（R27）は仕様書では <code>B1 0C</code> だが、XML は <code>B1 01</code> を見ている。</li>
+        <li>BROWSE 2（C5）は空き。</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>MIDI仕様の要点（公式マニュアル p.14–16）</h2>
+      <table>
+        <tr><th>種類</th><th>形式</th></tr>
+        <tr><td>ボタン</td><td class="mono">9n 番号 40（押下） / 8n 番号 00（離す）</td></tr>
+        <tr><td>ノブ・フェーダー</td><td class="mono">Bn 番号 00–7F</td></tr>
+        <tr><td>FXノブ・BEATS・SEL</td><td class="mono">Bn 番号 01 / 7F（相対）</td></tr>
+        <tr><td>ジョグ回転</td><td class="mono">Bn 51 41–7F 正転 / 3F–01 逆転</td></tr>
+        <tr><td>ピッチフェーダー</td><td class="mono">En LSB MSB（14bit）</td></tr>
+        <tr><td>LED 点灯 / 消灯 / 点滅</td><td class="mono">Bn 4A / 4B / 4C LED番号</td></tr>
+        <tr><td>モニターCUE LED</td><td class="mono">Bn 50 / 51 LED番号</td></tr>
+        <tr><td>全フェーダー値の要求</td><td class="mono">B0 4A 39</td></tr>
+      </table>
+      <p class="src" style="margin-top:8px">n = 0 が左デッキ、1 が右デッキ。FXボタン・FXノブ・BEATS・SHIFT・LOAD・ブラウズ系は左右どちらも n = 0 で届きます。</p>
+    </div>
+    <div class="card">
+      <h2>参照元</h2>
+      <ul class="src">
+        <li><a href="https://github.com/gThomas99/MIXXX_Denon_MC-2000_Controller">gThomas99/MIXXX_Denon_MC-2000_Controller</a>（このマップの元）</li>
+        <li><a href="https://cdn.inmusicbrands.com/denondj/legacy/mc2000/MC2000EM_ENG_CD-ROM_IM_v00.pdf">Denon MC2000 Owner's Manual</a>（MIDI command list）</li>
+        <li><a href="https://github.com/RohanM/mixxx-denon-mc2000">RohanM/mixxx-denon-mc2000</a>（以前使っていた版、<code>_old/</code> に保管）</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<script>
+// shape: c = circle (cx, cy, r), r = rect (cx, cy, w, h)
+// st: ok 想定どおり / check 実機確認 / warn 要修正 / bad 不具合 / none 未割当
+const C = [
+  // ---------- 左デッキ ----------
+  {g:"左デッキ  FX1"},
+  {id:"L1", n:"FX1 ノブ 1", s:["c",275,205,32], midi:"B0 55", fn:"FX1 エフェクト1 のメタノブ", sh:"—", led:"—", st:"check", note:"値の受け方が絶対値。飛ぶようなら直す。"},
+  {id:"L2", n:"FX1 ノブ 2", s:["c",398,205,32], midi:"B0 56", fn:"FX1 エフェクト2 のメタノブ", sh:"—", led:"—", st:"check", note:"L1 と同じ。"},
+  {id:"L3", n:"FX1 ノブ 3", s:["c",518,205,32], midi:"B0 57", fn:"FX1 エフェクト3 のメタノブ", sh:"—", led:"—", st:"check", note:"L1 と同じ。"},
+  {id:"L4", n:"BEATS ノブ（回転 / 押し）", s:["c",640,207,38], midi:"B0 58 / 90 40", fn:"回転: FX1 のドライ/ウェット\n押し: Deck1 の BPM タップ", sh:"回転: 選択中サンプラー（1–4）の音量\n押し: 選択サンプラーを 1→2→3→4 と切替", led:"—", st:"ok", note:"サンプラーを切り替えると、そのパッドが点滅する。"},
+  {id:"L5", n:"FX1 ボタン 1", s:["r",282,282,76,38], midi:"90/80 15", fn:"FX1 エフェクト1 ON/OFF", sh:"—", led:"5C (92) → ON/OFF", st:"ok", note:""},
+  {id:"L6", n:"FX1 ボタン 2", s:["r",401,282,76,38], midi:"90/80 12", fn:"FX1 エフェクト2 ON/OFF", sh:"—", led:"5D (93) → ON/OFF", st:"ok", note:""},
+  {id:"L7", n:"FX1 ボタン 3", s:["r",521,282,76,38], midi:"90/80 13", fn:"FX1 エフェクト3 ON/OFF", sh:"—", led:"5E (94) → ON/OFF", st:"ok", note:""},
+  {g:"左デッキ  LOOP / HOT CUE"},
+  {id:"L8", n:"LOOP IN", s:["r",281,362,76,38], midi:"90/80 37", fn:"ループ未設定なら4拍ループ開始。それ以外はIN点を打つ", sh:"短押し: IN点へ戻る\n長押し: ループ削除", led:"24 (36) → ループ中", st:"ok", note:""},
+  {id:"L9", n:"LOOP OUT", s:["r",401,362,76,38], midi:"90/80 39", fn:"OUT点を打つ", sh:"短押し: OUT点へ移動\n長押し: ループ削除", led:"40 (64) → ループ中", st:"ok", note:""},
+  {id:"L10", n:"LOOP CUT −", s:["c",500,362,17], midi:"90/80 69", fn:"ループ長を半分", sh:"1拍戻る", led:"—", st:"ok", note:""},
+  {id:"L11", n:"AUTO（LOOP）", s:["r",581,360,76,34], midi:"90/80 1D", fn:"ループ中なら解除。それ以外は自動ループ開始", sh:"直前のループを再開/解除", led:"2B (43) → ループ中", st:"ok", note:""},
+  {id:"L12", n:"LOOP CUT +", s:["c",660,362,17], midi:"90/80 6A", fn:"ループ長を倍", sh:"1拍進む", led:"—", st:"ok", note:""},
+  {id:"L13", n:"HOT CUE 1", s:["r",282,441,76,38], midi:"90/80 17\nSAMPLE時 90 21", fn:"ホットキュー1 設定/再生\nSAMPLE時: サンプラー1（空なら選択曲を読込、停止中なら頭から再生、再生中なら停止）", sh:"ホットキュー削除\nSAMPLE時: サンプラーを空にする", led:"11 (17) → キュー有無\nSAMPLE: 19 (25) → 再生中", st:"ok", note:""},
+  {id:"L14", n:"HOT CUE 2", s:["r",401,441,76,38], midi:"90/80 18\nSAMPLE時 90 22", fn:"ホットキュー2 / サンプラー2", sh:"削除 / 空にする", led:"13 (19) / 1B (27)", st:"ok", note:""},
+  {id:"L15", n:"HOT CUE 3", s:["r",521,441,76,38], midi:"90/80 19\nSAMPLE時 90 23", fn:"ホットキュー3 / サンプラー3", sh:"削除 / 空にする", led:"15 (21) / 1D (29)", st:"ok", note:""},
+  {id:"L16", n:"HOT CUE 4", s:["r",641,441,76,38], midi:"90/80 20\nSAMPLE時 90 24", fn:"ホットキュー4 / サンプラー4", sh:"削除 / 空にする", led:"17 (23) / 20 (32)", st:"ok", note:""},
+  {id:"L17", n:"SAMPLE MODE", s:["c",641,521,18], midi:"90/80 1A", fn:"パッドを HOT CUE / SAMPLE で切替", sh:"—", led:"1A に送信（仕様書は 23）", st:"warn", note:"横の ON LED が点かない可能性。"},
+  {g:"左デッキ  下部"},
+  {id:"L18", n:"KEY LOCK", s:["c",170,686,17], midi:"90/80 06", fn:"キーロック ON/OFF", sh:"ピッチ幅を 6→8→12→50% と切替", led:"08 → キーロック\n幅切替時は点滅回数で表示", st:"ok", note:""},
+  {id:"L19", n:"ピッチフェーダー", s:["r",168,912,70,270], midi:"E0", fn:"テンポ（rate）", sh:"—", led:"—", st:"ok", note:""},
+  {id:"L20", n:"ジョグホイール", s:["c",458,762,220], midi:"タッチ 90/80 51\n回転 B0 51 / 52", fn:"VINYL ON: 天面タッチでスクラッチ、触らず回すとピッチベンド\nVINYL OFF: ピッチベンドのみ", sh:"曲の中を細かくシーク", led:"—", st:"ok", note:""},
+  {id:"L21", n:"VINYL MODE", s:["c",642,946,19], midi:"90/80 04", fn:"スクラッチの有効/無効を切替", sh:"—", led:"06 → 常に点灯", st:"warn", note:"LED がモードに連動しない。"},
+  {id:"L22", n:"SYNC", s:["r",281,1028,70,34], midi:"90/80 6B", fn:"短押し: 1回だけ同期（LED点滅）\n長押し: 同期ロックON\nロック中に押す: OFF", sh:"同期ロックを切替", led:"09 → 同期ロック", st:"ok", note:""},
+  {id:"L23", n:"CUE", s:["r",410,1027,88,56], midi:"90/80 42", fn:"CDJ式キュー", sh:"曲の先頭へ戻る", led:"26 (38) → キュー表示", st:"ok", note:""},
+  {id:"L24", n:"PLAY / PAUSE", s:["r",514,1027,88,56], midi:"90/80 43", fn:"再生/一時停止", sh:"キュー点から再生", led:"27 (39) → 再生表示", st:"ok", note:""},
+  {id:"L25", n:"PITCH BEND −", s:["c",616,1027,17], midi:"90/80 0D", fn:"押している間だけ減速", sh:"32拍戻る", led:"—", st:"ok", note:""},
+  {id:"L26", n:"PITCH BEND +", s:["c",668,1027,17], midi:"90/80 0C", fn:"押している間だけ加速", sh:"32拍進む", led:"—", st:"ok", note:""},
+  {g:"左チャンネル  ミキサー"},
+  {id:"L27", n:"LEVEL", s:["c",754,208,26], midi:"B0 01", fn:"フィルター（クイックエフェクト）", sh:"—", led:"—", st:"ok", note:"設定でゲインに戻せる。"},
+  {id:"L28", n:"EQ HI", s:["c",754,322,25], midi:"B0 02", fn:"EQ 高域", sh:"—", led:"—", st:"ok", note:""},
+  {id:"L29", n:"EQ MID", s:["c",754,433,25], midi:"B0 03", fn:"EQ 中域", sh:"—", led:"—", st:"ok", note:""},
+  {id:"L30", n:"EQ LOW", s:["c",754,545,25], midi:"B0 04", fn:"EQ 低域", sh:"—", led:"—", st:"ok", note:""},
+  {id:"L31", n:"チャンネルフェーダー", s:["r",798,840,50,230], midi:"B0 05", fn:"Deck1 音量", sh:"—", led:"—", st:"ok", note:""},
+  {id:"L32", n:"モニター CUE", s:["r",756,634,72,34], midi:"90/80 01", fn:"Deck1 をヘッドホンで聴く ON/OFF", sh:"SHIFT ロックを切替", led:"45 (69) → ON/OFF", st:"ok", note:"起動時に自動で ON。"},
+  {id:"L33", n:"LOAD A", s:["c",842,298,23], midi:"90/80 62", fn:"選択曲を Deck1 に読込", sh:"Deck1 を空にする", led:"—", st:"ok", note:""},
+  // ---------- 右デッキ ----------
+  {g:"右デッキ  FX2"},
+  {id:"R1", n:"FX2 ノブ 1", s:["c",1165,205,32], midi:"B0 59", fn:"FX2 エフェクト1 のメタノブ", sh:"—", led:"—", st:"check", note:"L1 と同じ。"},
+  {id:"R2", n:"FX2 ノブ 2", s:["c",1287,205,32], midi:"B0 5A", fn:"FX2 エフェクト2 のメタノブ", sh:"—", led:"—", st:"check", note:""},
+  {id:"R3", n:"FX2 ノブ 3", s:["c",1405,205,32], midi:"B0 5B", fn:"FX2 エフェクト3 のメタノブ", sh:"—", led:"—", st:"check", note:""},
+  {id:"R4", n:"BEATS ノブ（回転 / 押し）", s:["c",1525,207,38], midi:"B0 5C / 90 41", fn:"回転: FX2 のドライ/ウェット\n押し: Deck2 の BPM タップ", sh:"回転: 選択中サンプラー（5–8）の音量\n押し: 選択サンプラーを 5→6→7→8 と切替", led:"—", st:"ok", note:""},
+  {id:"R5", n:"FX2 ボタン 1", s:["r",1162,282,76,38], midi:"90/80 55", fn:"FX2 エフェクト1 ON/OFF", sh:"—", led:"60 (96) → ON/OFF", st:"ok", note:""},
+  {id:"R6", n:"FX2 ボタン 2", s:["r",1282,282,76,38], midi:"90/80 52", fn:"FX2 エフェクト2 ON/OFF", sh:"—", led:"61 (97) → ON/OFF", st:"ok", note:""},
+  {id:"R7", n:"FX2 ボタン 3", s:["r",1402,282,76,38], midi:"90/80 53", fn:"FX2 エフェクト3 ON/OFF", sh:"—", led:"62 (98) → ON/OFF", st:"ok", note:""},
+  {g:"右デッキ  LOOP / HOT CUE"},
+  {id:"R8", n:"LOOP IN", s:["r",1162,360,76,38], midi:"91/81 37", fn:"ループ未設定なら4拍ループ開始。それ以外はIN点を打つ", sh:"短押し: IN点へ戻る\n長押し: ループ削除", led:"24 (36) → ループ中", st:"ok", note:""},
+  {id:"R9", n:"LOOP OUT", s:["r",1282,360,76,38], midi:"91/81 39", fn:"OUT点を打つ", sh:"短押し: OUT点へ移動\n長押し: ループ削除", led:"40 (64) → ループ中", st:"ok", note:""},
+  {id:"R10", n:"LOOP CUT −", s:["c",1383,360,17], midi:"91/81 69", fn:"ループ長を半分", sh:"1拍戻る", led:"—", st:"ok", note:""},
+  {id:"R11", n:"AUTO（LOOP）", s:["r",1462,360,76,34], midi:"91/81 1D", fn:"ループ中なら解除。それ以外は自動ループ開始", sh:"直前のループを再開/解除", led:"2B (43) → ループ中", st:"ok", note:""},
+  {id:"R12", n:"LOOP CUT +", s:["c",1545,360,17], midi:"91/81 6A", fn:"ループ長を倍", sh:"1拍進む", led:"—", st:"ok", note:""},
+  {id:"R13", n:"HOT CUE 1", s:["r",1162,441,76,38], midi:"91/81 17\nSAMPLE時 91 31", fn:"ホットキュー1 / サンプラー5", sh:"削除 / 空にする", led:"11 (17) / 41 (65)", st:"ok", note:""},
+  {id:"R14", n:"HOT CUE 2", s:["r",1282,441,76,38], midi:"91/81 18\nSAMPLE時 91 32", fn:"ホットキュー2 / サンプラー6", sh:"削除 / 空にする", led:"13 (19) / 43 (67)", st:"ok", note:""},
+  {id:"R15", n:"HOT CUE 3", s:["r",1402,441,76,38], midi:"91/81 19\nSAMPLE時 91 33", fn:"ホットキュー3 / サンプラー7", sh:"削除 / 空にする", led:"15 (21) / 45 (69)", st:"ok", note:""},
+  {id:"R16", n:"HOT CUE 4", s:["r",1522,441,76,38], midi:"91/81 20\nSAMPLE時 91 34", fn:"ホットキュー4 / サンプラー8", sh:"削除 / 空にする", led:"17 (23) / 47 (71)", st:"ok", note:""},
+  {id:"R17", n:"SAMPLE MODE", s:["c",1523,519,18], midi:"91/81 1A", fn:"パッドを HOT CUE / SAMPLE で切替", sh:"—", led:"1A に送信（仕様書は 49）", st:"warn", note:"L17 と同じ。"},
+  {g:"右デッキ  下部"},
+  {id:"R18", n:"KEY LOCK", s:["c",1636,684,17], midi:"91/81 06", fn:"キーロック ON/OFF", sh:"ピッチ幅を 6→8→12→50% と切替", led:"08 → キーロック", st:"ok", note:""},
+  {id:"R19", n:"ピッチフェーダー", s:["r",1636,912,70,270], midi:"E1", fn:"テンポ（rate）", sh:"—", led:"—", st:"ok", note:""},
+  {id:"R20", n:"ジョグホイール", s:["c",1342,760,220], midi:"タッチ 91/81 51\n回転 B1 51 / 52", fn:"L20 と同じ", sh:"曲の中を細かくシーク", led:"—", st:"ok", note:""},
+  {id:"R21", n:"VINYL MODE", s:["c",1521,944,19], midi:"91/81 04", fn:"スクラッチの有効/無効を切替", sh:"—", led:"06 → 常に点灯", st:"warn", note:"L21 と同じ。"},
+  {id:"R22", n:"SYNC", s:["r",1162,1026,70,34], midi:"91/81 6B", fn:"短押し: 1回だけ同期\n長押し: 同期ロックON\nロック中に押す: OFF", sh:"同期ロックを切替", led:"09 → 同期ロック", st:"ok", note:""},
+  {id:"R23", n:"CUE", s:["r",1290,1026,88,56], midi:"91/81 42", fn:"CDJ式キュー", sh:"曲の先頭へ戻る", led:"26 (38) → キュー表示", st:"ok", note:""},
+  {id:"R24", n:"PLAY / PAUSE", s:["r",1395,1026,88,56], midi:"91/81 43", fn:"再生/一時停止", sh:"キュー点から再生", led:"27 (39) → 再生表示", st:"ok", note:""},
+  {id:"R25", n:"PITCH BEND −", s:["c",1497,1026,17], midi:"91/81 0D", fn:"押している間だけ減速", sh:"32拍戻る", led:"—", st:"ok", note:""},
+  {id:"R26", n:"PITCH BEND +", s:["c",1549,1026,17], midi:"91/81 0C", fn:"押している間だけ加速", sh:"32拍進む", led:"—", st:"ok", note:""},
+  {g:"右チャンネル  ミキサー"},
+  {id:"R27", n:"LEVEL", s:["c",1050,208,26], midi:"B1 01（仕様書は B1 0C）", fn:"フィルター（クイックエフェクト）", sh:"—", led:"—", st:"check", note:"番号がずれていて効かない可能性。"},
+  {id:"R28", n:"EQ HI", s:["c",1050,322,25], midi:"B1 0D", fn:"EQ 高域", sh:"—", led:"—", st:"ok", note:""},
+  {id:"R29", n:"EQ MID", s:["c",1050,433,25], midi:"B1 0E", fn:"EQ 中域", sh:"—", led:"—", st:"ok", note:""},
+  {id:"R30", n:"EQ LOW", s:["c",1050,545,25], midi:"B1 0F", fn:"EQ 低域", sh:"—", led:"—", st:"ok", note:""},
+  {id:"R31", n:"チャンネルフェーダー", s:["r",1007,840,50,230], midi:"B1 10", fn:"Deck2 音量", sh:"—", led:"—", st:"ok", note:""},
+  {id:"R32", n:"モニター CUE", s:["r",1050,634,72,34], midi:"91/81 05", fn:"Deck2 をヘッドホンで聴く ON/OFF", sh:"SHIFT ロックを切替", led:"51 (81) → ON/OFF", st:"ok", note:""},
+  {id:"R33", n:"LOAD B", s:["c",962,298,23], midi:"90/80 63", fn:"選択曲を Deck2 に読込", sh:"Deck2 を空にする", led:"—", st:"ok", note:""},
+  // ---------- 中央 ----------
+  {g:"中央・共通"},
+  {id:"C1", n:"SEL ノブ（回転 / 押し）", s:["c",902,378,33], midi:"B0 54 / 90 28", fn:"回転: ライブラリを上下に移動\n押し: 選択中の項目を開く", sh:"—", led:"—", st:"ok", note:""},
+  {id:"C2", n:"BACK", s:["c",842,443,19], midi:"90/80 30", fn:"ライブラリの前の枠へフォーカス移動", sh:"—", led:"—", st:"ok", note:""},
+  {id:"C3", n:"FWD", s:["c",962,443,19], midi:"90/80 29", fn:"ライブラリの次の枠へフォーカス移動", sh:"—", led:"—", st:"ok", note:""},
+  {id:"C4", n:"BROWSE 1", s:["c",842,546,19], midi:"90/80 64", fn:"選択曲を試聴デッキで再生/停止", sh:"—", led:"—", st:"ok", note:""},
+  {id:"C5", n:"BROWSE 2", s:["c",962,546,19], midi:"90/80 67", fn:"未割当", sh:"—", led:"—", st:"none", note:"空き。何か割り当てられる。"},
+  {id:"C6", n:"SHIFT", s:["r",902,634,72,34], midi:"90/80 60", fn:"押している間 SHIFT", sh:"SHIFT+モニターCUE で SHIFT ロック", led:"02 → SHIFT ロック中", st:"ok", note:"上の小さな LOCK LED が SHIFT ロック表示。"},
+  {id:"C7", n:"クロスフェーダー", s:["r",903,1025,220,80], midi:"B0 16", fn:"クロスフェード", sh:"SHIFT 中に動かす: 鳴っている側に相手デッキを一時同期。SHIFT を離すと元の同期設定に戻る", led:"—", st:"ok", note:""},
+  {id:"C8", n:"MONITOR PAN（CUE/MASTER）", s:["c",163,378,30], midi:"B0 43", fn:"ヘッドホンの CUE / MASTER バランス", sh:"—", led:"—", st:"ok", note:""},
+  {id:"C9", n:"PHONES", s:["c",165,500,30], midi:"B0 44", fn:"ヘッドホン音量", sh:"—", led:"—", st:"ok", note:""},
+  {id:"C10", n:"MASTER LEVEL", s:["c",1637,378,30], midi:"B0 19", fn:"マスター音量", sh:"—", led:"—", st:"ok", note:""},
+];
+
+const ST = {
+  ok:    {label:"想定どおり"},
+  check: {label:"実機で確認"},
+  warn:  {label:"要修正"},
+  bad:   {label:"不具合"},
+  none:  {label:"未割当"},
+};
+const NS = "http://www.w3.org/2000/svg";
+const zonesEl = document.getElementById("zones");
+const rowsEl = document.getElementById("rows");
+const legendEl = document.getElementById("legend");
+const zoneById = {}, rowById = {};
+const active = new Set(Object.keys(ST));
+
+function el(tag, attrs, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function esc(s) { return String(s).replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])).replace(/\n/g, "<br>"); }
+
+for (const c of C) {
+  if (c.g) {
+    const tr = document.createElement("tr");
+    tr.className = "group";
+    tr.innerHTML = `<td colspan="8">${esc(c.g)}</td>`;
+    rowsEl.appendChild(tr);
+    continue;
+  }
+  // photo zone
+  const g = el("g", {class: `zone st-${c.st}`, tabindex: "0", "data-id": c.id, role: "button", "aria-label": `${c.id} ${c.n}`}, zonesEl);
+  const [kind, cx, cy, a, b] = c.s;
+  let px, py;
+  if (kind === "c") {
+    el("circle", {class: "shape", cx, cy, r: a}, g);
+    if (a > 100) { px = cx; py = cy; } else { px = cx - a * .72; py = cy - a * .72; }
+  } else {
+    el("rect", {class: "shape", x: cx - a / 2, y: cy - b / 2, width: a, height: b, rx: 6}, g);
+    px = cx - a / 2; py = cy - b / 2;
+  }
+  const w = 14 + c.id.length * 13;
+  el("rect", {class: "pill", x: px - w / 2, y: py - 14, width: w, height: 28, rx: 14}, g);
+  const t = el("text", {x: px, y: py + 1}, g);
+  t.textContent = c.id;
+  zoneById[c.id] = g;
+
+  // table row
+  const tr = document.createElement("tr");
+  tr.dataset.id = c.id;
+  tr.dataset.st = c.st;
+  tr.innerHTML = `<td class="id">${c.id}</td><td>${esc(c.n)}</td><td class="midi">${esc(c.midi)}</td><td class="fn">${esc(c.fn)}</td><td class="sh">${esc(c.sh)}</td><td class="led">${esc(c.led)}</td><td><span class="badge s-${c.st}"><span class="dot"></span><span style="color:var(--fg)">${ST[c.st].label}</span></span></td><td class="note">${esc(c.note)}</td>`;
+  rowsEl.appendChild(tr);
+  rowById[c.id] = tr;
+
+  const on = v => { g.classList.toggle("on", v); tr.classList.toggle("on", v); };
+  g.addEventListener("mouseenter", () => on(true));
+  g.addEventListener("mouseleave", () => on(false));
+  g.addEventListener("focus", () => on(true));
+  g.addEventListener("blur", () => on(false));
+  tr.addEventListener("mouseenter", () => on(true));
+  tr.addEventListener("mouseleave", () => on(false));
+  const go = () => {
+    tr.scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center"});
+    tr.classList.remove("flash"); void tr.offsetWidth; tr.classList.add("flash");
+  };
+  g.addEventListener("click", go);
+  g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); } });
+}
+
+// legend / filter
+const counts = {};
+C.forEach(c => { if (c.st) counts[c.st] = (counts[c.st] || 0) + 1; });
+for (const k of Object.keys(ST)) {
+  if (!counts[k]) continue;
+  const b = document.createElement("button");
+  b.className = `chip s-${k}`;
+  b.type = "button";
+  b.id = `f-${k}`;
+  b.setAttribute("aria-pressed", "true");
+  b.innerHTML = `<span class="dot"></span><span class="lbl">${ST[k].label}</span><span class="n">${counts[k]}</span>`;
+  b.addEventListener("click", () => {
+    if (active.has(k)) active.delete(k); else active.add(k);
+    b.setAttribute("aria-pressed", active.has(k) ? "true" : "false");
+    applyFilter();
+  });
+  legendEl.appendChild(b);
+}
+function applyFilter() {
+  for (const c of C) {
+    if (!c.id) continue;
+    const show = active.has(c.st);
+    zoneById[c.id].classList.toggle("dim", !show);
+    rowById[c.id].hidden = !show;
+  }
+}
+</script>
